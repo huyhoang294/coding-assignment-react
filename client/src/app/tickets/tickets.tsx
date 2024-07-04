@@ -1,15 +1,16 @@
 import styles from './tickets.module.css';
 import { ReactNode, useEffect, useState } from 'react';
 import { Ticket, User } from '@acme/shared-models';
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import { Button } from '@/components/ui/button';
 import {
   ListFilter,
@@ -18,6 +19,7 @@ import {
   CircleOff,
   LoaderCircle,
 } from 'lucide-react';
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import {
   Card,
   CardContent,
@@ -26,6 +28,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import {
   Table,
   TableBody,
@@ -34,9 +37,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import { Badge } from '@/components/ui/badge';
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import { Skeleton } from '@/components/ui/skeleton';
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import { cn } from '@/lib/utils';
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import {
   Select,
   SelectContent,
@@ -46,14 +53,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
 import CreateTicket from '@/components/createTicket';
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  QueryClient,
-  QueryClientProvider,
-} from 'react-query';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useNavigate } from 'react-router-dom';
 
 enum FilterStatusOptions {
   All,
@@ -75,7 +78,9 @@ export function Tickets() {
   const [modal, setModal] = useState<boolean>(false);
   const [loading, setLoading] = useState<number>(0);
   const queryClient = useQueryClient();
-
+  const navigate = useNavigate();
+  const goToRouteTicket = (id: number | undefined) =>
+    id ? navigate(`/${id}`) : null;
   // Queries
   const tickets = useQuery<Ticket[]>('tickets', async function fetchTickets() {
     const response = await fetch('/api/tickets');
@@ -116,7 +121,7 @@ export function Tickets() {
 
   function assignUser({ ticketId, userId }: TicketParams) {
     setLoading(ticketId ?? 0);
-    let url = userId
+    const url = userId
       ? `/api/tickets/${ticketId}/assign/${userId}`
       : `/api/tickets/${ticketId}/unassign`;
     return fetch(url, {
@@ -126,7 +131,7 @@ export function Tickets() {
 
   function completeTicket({ ticketId, method }: TicketParams) {
     setLoading(ticketId ?? 0);
-    let url = `/api/tickets/${ticketId}/complete`;
+    const url = `/api/tickets/${ticketId}/complete`;
     return fetch(url, {
       method: method,
     });
@@ -138,18 +143,21 @@ export function Tickets() {
         case FilterStatusOptions.All:
           setFilteredTickets(tickets.data);
           break;
-        case FilterStatusOptions.Completed:
-          let completedTickets = tickets.data.filter(
+        case FilterStatusOptions.Completed: {
+          const completedTickets = tickets.data.filter(
             (ticket: Ticket) => ticket.completed
           );
           setFilteredTickets(completedTickets);
           break;
-        case FilterStatusOptions.Incomplete:
-          let inCompletedTickets = tickets.data.filter(
+        }
+
+        case FilterStatusOptions.Incomplete: {
+          const inCompletedTickets = tickets.data.filter(
             (ticket: Ticket) => !ticket.completed
           );
           setFilteredTickets(inCompletedTickets);
           break;
+        }
       }
     }
   }, [tickets, filteredStatus]);
@@ -251,7 +259,12 @@ export function Tickets() {
                 {filteredTickets.map((t) => (
                   <TableRow key={t.id}>
                     <TableCell className="font-medium">
-                      {t.description}
+                      <Button
+                        variant="link"
+                        onClick={() => goToRouteTicket(t.id)}
+                      >
+                        {t.description}
+                      </Button>
                     </TableCell>
                     <TableCell className="font-medium">
                       <Select
@@ -327,7 +340,13 @@ export function Tickets() {
           </div>
         </CardFooter>
       </Card>
-      <CreateTicket users={users.data ?? []} open={modal} onClose={setModal} />
+      <CreateTicket
+        open={modal}
+        onClose={() => {
+          setModal(false);
+          queryClient.invalidateQueries({ queryKey: ['tickets'] });
+        }}
+      />
     </>
   );
 }
