@@ -4,8 +4,8 @@ export type User = {
 };
 
 export type Ticket = {
-  id: number;
+  id: number | undefined;
   description: string;
-  assigneeId: null | number;
+  assigneeId: number | null;
   completed: boolean;
 };
